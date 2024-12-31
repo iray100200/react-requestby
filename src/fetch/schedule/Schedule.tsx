@@ -5,10 +5,8 @@ import { FetchContext, FetchOptions } from "../provider";
 
 export class Scheduler<T = string> {
   private listeners: Map<T, ((request: Promise<Response>) => void)> = new Map()
-  
-  constructor(private context: FetchOptions) {
 
-  }
+  constructor(private context: FetchOptions) { }
 
   /**
    * @description The next() method is used for initiating a new HTTP request by fetch API.
