@@ -5,16 +5,13 @@ import { FetchContext, FetchOptions } from "../provider";
 
 export class Scheduler<T = string> {
   private listeners: Map<T, ((request: Promise<Response>) => void)> = new Map()
-
-  /**
-   * It's used for binding the fetch context
-   * @param context FetchContext
-   */
+  
   constructor(private context: FetchOptions) {
 
   }
 
   /**
+   * @description The next() method is used for initiating a new HTTP request by fetch API.
    * @param id The fetch option id defined in the FetchOption
    * @param query The query params contained in the URL
    * @param requestInit The RequestInit dictionary of the Fetch API represents the set of options that can be used to configure a fetch request
@@ -36,7 +33,7 @@ export class Scheduler<T = string> {
   }
 
   /**
-   * 
+   * @description The listen() method of the fetch option id sets up a function that will be called whenever the next function is invoked.
    * @param id The fetch option id defined in the FetchOption
    * @param callback The callback will be immediately excuted once the above next function is invoked
    */

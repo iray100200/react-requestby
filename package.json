@@ -1,7 +1,7 @@
 {
   "name": "react-requestly",
   "version": "1.0.97",
-  "description": "About declarative requests for React",
+  "description": "Declarative and Predictable HTTP Request Components for React",
   "main": "dist/index.es.js",
   "scripts": {
     "build": "rimraf dist && tsc && vite build",
