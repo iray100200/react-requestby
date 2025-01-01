@@ -1,19 +1,17 @@
 'use client';
 import { memo } from 'react';
-import type { JSX } from 'react';
-
-declare type ChildrenType = null | string | JSX.Element
+import type { ReactNode } from 'react';
 
 export declare interface ThenProps<T> {
-  children?: (value: T) => ChildrenType;
+  children?: (value: T) => ReactNode;
 }
 
 declare interface ThenComponentProps {
-  children: ChildrenType;
+  children: ReactNode;
   value: unknown;
 }
 
-export const Then: <T>(props: ThenProps<T>) => ChildrenType = () => {
+export const Then: <T>(props: ThenProps<T>) => ReactNode = () => {
   return null
 }
 

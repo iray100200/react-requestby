@@ -1,19 +1,17 @@
 'use client';
 import { memo } from 'react';
-import type { JSX } from 'react';
-
-declare type ChildrenType = null | string | JSX.Element;
+import type { ReactNode } from 'react';
 
 export declare interface CatchProps {
-  children?: (error: Error) => ChildrenType;
+  children?: (error: Error) => ReactNode;
 }
 
 declare interface CatchComponentProps {
-  children: ChildrenType;
+  children: ReactNode;
   error: unknown;
 }
 
-export const Catch: (props: CatchProps) => ChildrenType = () => {
+export const Catch: (props: CatchProps) => ReactNode = () => {
   return null
 }
 

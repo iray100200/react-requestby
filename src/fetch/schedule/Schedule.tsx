@@ -4,7 +4,7 @@ import { useContext, useMemo } from "react";
 import { FetchContext, FetchOptions } from "../provider";
 
 export class Scheduler<T = string> {
-  private listeners: Map<T, ((request: Promise<Response>) => void)> = new Map()
+  private listeners: Map<T, (request: () => Promise<Response>) => void> = new Map()
 
   constructor(private context: FetchOptions) { }
 
@@ -22,7 +22,7 @@ export class Scheduler<T = string> {
     for (let key in query) {
       url.searchParams.set(key, query[key])
     }
-    const request = fetch(url, {
+    const request = () => fetch(url, {
       ...config.requestInit,
       ...requestInit
     })
@@ -35,7 +35,7 @@ export class Scheduler<T = string> {
    * @param id The fetch option id defined in the FetchOption
    * @param callback The callback will be immediately excuted once the above next function is invoked
    */
-  public listen(id: T, callback: (request: Promise<Response>) => void): void {
+  public listen(id: T, callback: (request: () => Promise<Response>) => void): void {
     this.listeners.set(id, callback)
   }
 }

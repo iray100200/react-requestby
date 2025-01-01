@@ -9,7 +9,9 @@ export default function handler(
   res: NextApiResponse<ResponseData>
 ) {
   if ("name" in req.query) {
-    return res.status(200).json({ message: req.query.name as string })
+    return setTimeout(() => {
+      res.status(200).json({ message: req.query.name as string })
+    }, 500)
   }
   res.status(200).json({ message: 'Hello from Next.js!' })
 }

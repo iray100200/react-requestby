@@ -1,3 +1,6 @@
 export * from './fetch'
+export * from './catch'
+export * from './pending'
+export * from './then'
 export * from './provider'
 export * from './schedule'

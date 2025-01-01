@@ -1,13 +1,13 @@
 'use client';
-import type { ReactElement, MemoExoticComponent, ComponentType, JSX } from 'react';
-import { memo, useState, useEffect as effect, Children, useMemo, useContext } from 'react';
+import type { ReactElement, MemoExoticComponent, ComponentType, ReactNode, JSX } from 'react';
+import { memo, useState, useEffect as effect, Children, useMemo, useContext, useCallback } from 'react';
 import { ThenComponent, Then, ThenProps } from '../then';
 import { CatchComponent, Catch, CatchProps } from '../catch';
 import { FetchContext } from '../provider';
 import { Scheduler } from '../schedule';
+import { Pending } from '../pending';
 
-declare type ChildrenType = null | string | JSX.Element;
-declare type ResultCallback = { children: ChildrenType | ((value: unknown) => ChildrenType) }
+declare type ResultCallback = { children: ReactNode | ((value: unknown) => ReactNode) }
 declare type Child = ReactElement<ResultCallback, MemoExoticComponent<ComponentType<ThenProps<unknown> | CatchProps>>>
 
 declare interface FetchProps {
@@ -21,33 +21,39 @@ declare interface Data<T = unknown> {
   error: Error | null;
 }
 
-const Fetch = memo(function Fetch(props: FetchProps) {
+export const Fetch = memo(function Fetch(props: FetchProps) {
   const { id, scheduler, children } = props
   const [data, setData] = useState<Data>({ value: null, error: null })
-  const [request, setRequest] = useState<Promise<Response>>()
+  const [pending, setPending] = useState(false)
+  const [request, setRequest] = useState<(() => Promise<Response>)[]>([])
   const context = useContext(FetchContext)
-  const fetchConfig = useMemo(() => context.find(item => item.id === id), [])
+  const fetchOption = useMemo(() => context.find(item => item.id === id), [])
+  const pendingNodes = useMemo(() => Children.toArray(children).filter((child) => (child as JSX.Element).type === Pending), [children])
+  const renderContent = useCallback((children: unknown, data: unknown) => {
+    return typeof children === 'function' ? children(data) : children
+  }, [])
 
   effect(() => {
     if (!scheduler) return
-    scheduler.listen(id, (request: Promise<Response>) => {
-      setRequest(request)
+    scheduler.listen(id, (request) => {
+      setRequest([request])
     })
   }, [id, scheduler])
 
   effect(() => {
-    if (!fetchConfig) return
-    const request = fetch(fetchConfig.url, fetchConfig.requestInit)
-    setRequest(request)
-  }, [id, fetchConfig])
+    if (!fetchOption) return
+    const request = () => fetch(fetchOption.url, fetchOption.requestInit)
+    setRequest([request])
+  }, [id, fetchOption])
 
   effect(() => {
-    if (!request || !fetchConfig) return
-    request.then((res) => {
-      if (fetchConfig.responseType === 'json') {
+    if (request.length === 0 || !fetchOption) return
+    setPending(true)
+    request[0]().then((res) => {
+      if (fetchOption.responseType === 'json') {
         return res.json()
       }
-      if (fetchConfig.responseType === 'text') {
+      if (fetchOption.responseType === 'text') {
         return res.text()
       }
     }).then((value) => {
@@ -60,36 +66,28 @@ const Fetch = memo(function Fetch(props: FetchProps) {
         error,
         value: null
       })
+    }).finally(() => {
+      setPending(false)
     })
-  }, [request, fetchConfig])
+  }, [request, fetchOption])
 
+  if (pendingNodes.length > 0 && pending) {
+    return pendingNodes
+  }
   return Children.map(children, (child) => {
-    if (data.value && child.type === Then && typeof child.props.children === 'function') {
+    if (data.value && child.type === Then) {
       return <ThenComponent key="then" value={data.value}>
-        {child.props.children(data.value)}
+        {renderContent(child.props.children, data.value)}
       </ThenComponent>
     }
     if (data.error && child.type === Catch && typeof child.props.children === 'function') {
       return <CatchComponent key="catch" error={data.error}>
-        {child.props.children(data.error)}
+        {renderContent(child.props.children, data.error)}
       </CatchComponent>
+    }
+    if (child.type === Pending) {
+      return null
     }
     return child
   })
 })
-
-function useFetch() {
-  const _Fetch = useMemo(() => Fetch, [])
-  const _Then = useMemo(() => Then, [])
-  const _Catch = useMemo(() => Catch, [])
-
-  return {
-    Fetch: _Fetch,
-    Then: _Then,
-    Catch: _Catch
-  }
-}
-
-export {
-  useFetch
-}

@@ -1,6 +1,6 @@
 {
   "name": "react-requestly",
-  "version": "1.0.97",
+  "version": "1.0.113",
   "description": "Declarative and Predictable HTTP Request Components for React",
   "main": "dist/index.es.js",
   "scripts": {

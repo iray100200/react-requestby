@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import styles from "./page.module.css";
-import { useFetch, useSchedule } from 'react-requestly';
+import { Fetch, Then, Catch, Pending, useSchedule } from 'react-requestly';
 import { memo, useCallback, useState } from "react";
 import { FetchProvider, FetchOptions } from "react-requestly";
 
@@ -28,7 +28,6 @@ const fetchConfig: FetchOptions = [
 ]
 
 function App() {
-  const { Fetch, Then, Catch } = useFetch()
   const scheduler = useSchedule()
 
   const handleClick = useCallback(() => {
@@ -51,6 +50,7 @@ function App() {
           (value) => value.message
         }
       </Then>
+      <Pending>Loading...</Pending>
     </Fetch>
   </div>
 }
