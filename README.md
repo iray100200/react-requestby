@@ -75,8 +75,11 @@ function App() {
 }
 
 function Root() {
-  return <FetchProvider>
+  return <FetchProvider value={fetchConfig}>
     <App />
   </FetchProvider>
 }
 ```
+
+# License
+MIT License
