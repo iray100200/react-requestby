@@ -1,6 +1,6 @@
 {
   "name": "react-requestby",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Declarative and Predictable HTTP Request Components for React",
   "main": "dist/index.es.js",
   "scripts": {
