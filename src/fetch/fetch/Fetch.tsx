@@ -4,16 +4,19 @@ import { memo, useState, useEffect as effect, Children, useMemo, useContext, use
 import { ThenComponent, Then, ThenProps } from '../then';
 import { CatchComponent, Catch, CatchProps } from '../catch';
 import { FetchContext } from '../provider';
-import { Scheduler } from '../schedule';
+import { Scheduler, SchedulerContext } from '../schedule';
 import { Pending } from '../pending';
 
 declare type ResultCallback = { children: ReactNode | ((value: unknown) => ReactNode) }
 declare type Child = ReactElement<ResultCallback, MemoExoticComponent<ComponentType<ThenProps<unknown> | CatchProps>>>
 
-declare interface FetchProps {
-  id: string;
+declare interface FetchProps extends RequestInit {
+  target: string;
   children: Child | Child[];
   scheduler?: Scheduler;
+  searchParams?: {
+    [key: string]: string
+  }
 }
 
 declare interface Data<T = unknown> {
@@ -22,29 +25,50 @@ declare interface Data<T = unknown> {
 }
 
 export const Fetch = memo(function Fetch(props: FetchProps) {
-  const { id, scheduler, children } = props
+  const { target, scheduler, children, searchParams, ...requestInit } = props
+
+  //#regions states
   const [data, setData] = useState<Data>({ value: null, error: null })
   const [pending, setPending] = useState(false)
   const [request, setRequest] = useState<(() => Promise<Response>)[]>([])
-  const context = useContext(FetchContext)
-  const fetchOption = useMemo(() => context.find(item => item.id === id), [])
+  //#endregion
+
+  //#region context
+  const fetchContext = useContext(FetchContext)
+  const schedulerContext = useContext(SchedulerContext)
+  //#endregion
+
+  //#region memos
+  const fetchOption = useMemo(() => fetchContext.find(item => item.id === target), [])
   const pendingNodes = useMemo(() => Children.toArray(children).filter((child) => (child as JSX.Element).type === Pending), [children])
+  //#endregion
+
+  //#region callbacks
   const renderContent = useCallback((children: unknown, data: unknown) => {
     return typeof children === 'function' ? children(data) : children
   }, [])
+  //#endregion
 
   effect(() => {
-    if (!scheduler) return
-    scheduler.listen(id, (request) => {
+    if (!schedulerContext) return
+    schedulerContext.listen(target, (request) => {
       setRequest([request])
     })
-  }, [id, scheduler])
+  }, [target, schedulerContext])
 
   effect(() => {
     if (!fetchOption) return
-    const request = () => fetch(fetchOption.url, fetchOption.requestInit)
+    if (schedulerContext && schedulerContext.always) return
+    const url = new URL(fetchOption.url, location.origin)
+    for (const key in searchParams) {
+      url.searchParams.set(key, searchParams[key])
+    }
+    const request = () => fetch(url, {
+      ...fetchOption.requestInit,
+      ...requestInit
+    })
     setRequest([request])
-  }, [id, fetchOption])
+  }, [target, schedulerContext, fetchOption])
 
   effect(() => {
     if (request.length === 0 || !fetchOption) return

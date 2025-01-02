@@ -1,12 +1,16 @@
 'use client';
-
-import { useContext, useMemo } from "react";
+import type { NamedExoticComponent } from 'react';
+import { memo, createContext, ReactNode, useContext, useMemo } from "react";
 import { FetchContext, FetchOptions } from "../provider";
+
+declare interface SchedulerProviderProps {
+  children: ReactNode;
+}
 
 export class Scheduler<T = string> {
   private listeners: Map<T, (request: () => Promise<Response>) => void> = new Map()
 
-  constructor(private context: FetchOptions) { }
+  constructor(private context: FetchOptions, public always: boolean) { }
 
   /**
    * @description The next() method is used for initiating a new HTTP request by fetch API.
@@ -15,12 +19,12 @@ export class Scheduler<T = string> {
    * @param requestInit The RequestInit dictionary of the Fetch API represents the set of options that can be used to configure a fetch request
    * @returns void
    */
-  public next(id: T, query?: { [key: string]: string }, requestInit?: Partial<RequestInit>): void {
+  public next(id: T, searchParams?: { [key: string]: string }, requestInit?: Partial<RequestInit>): void {
     const config = this.context.find(item => item.id === id)
     if (!config) return
     const url = new URL(config.url, location.origin)
-    for (let key in query) {
-      url.searchParams.set(key, query[key])
+    for (let key in searchParams) {
+      url.searchParams.set(key, searchParams[key])
     }
     const request = () => fetch(url, {
       ...config.requestInit,
@@ -40,11 +44,23 @@ export class Scheduler<T = string> {
   }
 }
 
-export function useSchedule(): Scheduler {
-  const context = useContext(FetchContext)
-  if (!context) {
-    throw new Error('useSchedule must be used in a Provider!')
-  }
-  const schedule = useMemo(() => new Scheduler(context), [])
-  return schedule
+/**
+ * A hook that's used for returning a Scheduler
+ * @param always An indicator that indicates if all the request should be managed by A Scheduler, if set true, the initial request will be skipped
+ * @returns Scheduler
+ */
+export function useSchedule(always: boolean = false): [NamedExoticComponent<SchedulerProviderProps>, Scheduler] {
+  const fetchContext = useContext(FetchContext)
+  const scheduler = useMemo(() => new Scheduler(fetchContext, always), [fetchContext, always])
+  const SchedulerProvider = useMemo(() => memo(function SchedulerProvider(props: SchedulerProviderProps) {
+    if (!fetchContext) {
+      throw new Error('useSchedule must be used in a FetchProvider!')
+    }
+    return <SchedulerContext.Provider value={scheduler}>
+      {props.children}
+    </SchedulerContext.Provider>
+  }), [scheduler])
+  return [SchedulerProvider, scheduler]
 }
+
+export const SchedulerContext = createContext<Scheduler | null>(null)

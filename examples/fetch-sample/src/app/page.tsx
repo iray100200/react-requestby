@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import styles from "./page.module.css";
-import { Fetch, Then, Catch, Pending, useSchedule } from 'react-requestly';
+import { FetchProvider, FetchOptions, Fetch, Then, Catch, Pending, useSchedule } from 'react-requestby';
 import { memo, useCallback, useState } from "react";
-import { FetchProvider, FetchOptions } from "react-requestly";
 
 const Next = memo(function Next(props: { children: string }) {
   return <div>Next div! {props.children}</div>
@@ -24,34 +23,53 @@ const fetchConfig: FetchOptions = [
     id: 'error',
     url: '/api/error',
     responseType: 'json'
+  },
+  {
+    id: 'hello2',
+    url: '/api/hello',
+    responseType: 'json'
   }
 ]
 
 function App() {
-  const scheduler = useSchedule()
+  const [SchedulerProvider, scheduler] = useSchedule(false)
 
   const handleClick = useCallback(() => {
     scheduler.next('hello', { name: Math.random().toString() })
   }, [scheduler])
 
   return <div onClick={handleClick}>
-    <Fetch id="error" scheduler={scheduler}>
-      <Catch>
-        {
-          (error) => {
-            return <Next>{error.message}</Next>
+    <div>The requests:</div>
+    <SchedulerProvider>
+      <Fetch target="error">
+        <Catch>
+          {
+            (error) => {
+              return <Next>{error.message}</Next>
+            }
           }
-        }
-      </Catch>
-    </Fetch>
-    <Fetch id="hello" scheduler={scheduler}>
-      <Then<HelloResponse>>
-        {
-          (value) => value.message
-        }
-      </Then>
-      <Pending>Loading...</Pending>
-    </Fetch>
+        </Catch>
+      </Fetch>
+      <Fetch target="hello" searchParams={{
+        name: Math.random().toString()
+      }}>
+        <Then<HelloResponse>>
+          {
+            (value) => value.message
+          }
+        </Then>
+        <Pending>Loading...</Pending>
+      </Fetch>
+    </SchedulerProvider>
+    <div>
+      <Fetch target="hello2">
+        <Then<HelloResponse>>
+          {
+            (value) => value.message
+          }
+        </Then>
+      </Fetch>
+    </div>
   </div>
 }
 
