@@ -1,7 +1,7 @@
 {
   "name": "react-requestby",
   "version": "1.1.8",
-  "description": "Declarative and Predictable HTTP Request Components for React",
+  "description": "Declarative and predictable HTTP request components for React",
   "main": "dist/index.es.js",
   "scripts": {
     "build": "rimraf dist && tsc && vite build",
@@ -12,6 +12,10 @@
   "keywords": [
     "react"
   ],
+  "homepage": "https://github.com/iray100200/react-requestby",
+  "bugs": {
+    "url": "https://github.com/iray100200/react-requestby/issues"
+  },
   "author": "Raymond Zhang",
   "license": "MIT",
   "devDependencies": {
