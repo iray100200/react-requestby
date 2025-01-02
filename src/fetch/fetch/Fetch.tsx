@@ -4,7 +4,7 @@ import { memo, useState, useEffect as effect, Children, useMemo, useContext, use
 import { ThenComponent, Then, ThenProps } from '../then';
 import { CatchComponent, Catch, CatchProps } from '../catch';
 import { FetchContext } from '../provider';
-import { Scheduler, SchedulerContext } from '../schedule';
+import { Scheduler, SchedulerContext } from '../scheduler';
 import { Pending } from '../pending';
 
 declare type ResultCallback = { children: ReactNode | ((value: unknown) => ReactNode) }
