@@ -49,9 +49,9 @@ export class Scheduler<T = string> {
  * @param always An indicator that indicates if all the request should be managed by A Scheduler, if set true, the initial request will be skipped
  * @returns Scheduler
  */
-export function useSchedule(always: boolean = false): [NamedExoticComponent<SchedulerProviderProps>, Scheduler] {
+export function useSchedule<T = string>(always: boolean = false): [NamedExoticComponent<SchedulerProviderProps>, Scheduler<T>] {
   const fetchContext = useContext(FetchContext)
-  const scheduler = useMemo(() => new Scheduler(fetchContext, always), [fetchContext, always])
+  const scheduler = useMemo(() => new Scheduler<T>(fetchContext, always), [fetchContext, always])
   const SchedulerProvider = useMemo(() => memo(function SchedulerProvider(props: SchedulerProviderProps) {
     if (!fetchContext) {
       throw new Error('useSchedule must be used in a FetchProvider!')
@@ -63,4 +63,4 @@ export function useSchedule(always: boolean = false): [NamedExoticComponent<Sche
   return [SchedulerProvider, scheduler]
 }
 
-export const SchedulerContext = createContext<Scheduler | null>(null)
+export const SchedulerContext = createContext<Scheduler<unknown> | null>(null)

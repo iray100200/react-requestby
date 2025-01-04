@@ -1,14 +1,16 @@
 'use client';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import type { ReactNode } from 'react';
 
 export declare interface CatchProps {
-  children?: (error: Error) => ReactNode;
+  onReturn?: (error: Error) => ReactNode;
+  children?: ReactNode;
 }
 
 declare interface CatchComponentProps {
-  children: ReactNode;
-  error: unknown;
+  render?: (error?: Error) => ReactNode;
+  error?: Error;
+  children?: ReactNode;
 }
 
 export const Catch: (props: CatchProps) => ReactNode = () => {
@@ -16,5 +18,12 @@ export const Catch: (props: CatchProps) => ReactNode = () => {
 }
 
 export const CatchComponent = memo(function CatchComponent(props: CatchComponentProps) {
-  return props.children
+  if (!props.error) {
+    return null
+  }
+  const result = useMemo(() => {
+    if (!props.render) return props.children
+    return props.render(props.error)
+  }, [props.render, props.error, props.children])
+  return result
 })

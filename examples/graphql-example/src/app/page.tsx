@@ -1,80 +1,9 @@
-'use client'
-
 import Image from "next/image";
 import styles from "./page.module.css";
-import { FetchProvider, FetchOptions, Fetch, Then, Catch, Pending, useSchedule, useFetchResult } from 'react-requestby';
-import { memo, useCallback, useState } from "react";
-
-const Next = memo(function Next(props: { children: string }) {
-  return <div>Next div! {props.children}</div>
-})
-
-declare interface HelloResponse {
-  message: string
-}
-
-const fetchConfig = [
-  {
-    id: 'hello',
-    url: '/api/hello',
-    responseType: 'json'
-  },
-  {
-    id: 'error',
-    url: '/api/error',
-    responseType: 'json'
-  },
-  {
-    id: 'hello2',
-    url: '/api/hello',
-    responseType: 'json'
-  }
-] as const satisfies FetchOptions
-
-const ThenResult = memo(function ThenResult() {
-  const { value } = useFetchResult<{ message: string }>()
-  return value?.message
-})
-
-function App() {
-  const [SchedulerProvider, scheduler] = useSchedule<typeof fetchConfig[number]['id']>(false)
-
-  const handleClick = useCallback(() => {
-    scheduler.next('hello', { name: Math.random().toString() })
-  }, [scheduler])
-
-  const renderThen = useCallback((value: HelloResponse) => value.message, [])
-  const renderError = useCallback((error: Error) => <Next>{error.message}</Next>, [])
-
-  return <div onClick={handleClick}>
-    <div>The requests:</div>
-    <SchedulerProvider>
-      <Fetch target="error">
-        <Then onReturn={renderThen}></Then>
-        <Catch onReturn={renderError} />
-        <Pending>Loading...</Pending>
-      </Fetch>
-      <Fetch target="hello" searchParams={{
-        name: Math.random().toString()
-      }}>
-        <Then>
-          <ThenResult />
-        </Then>
-        <Pending>Loading...</Pending>
-      </Fetch>
-    </SchedulerProvider>
-  </div>
-}
 
 export default function Home() {
-  const [count, setCount] = useState(0)
-
-  const handleClick = useCallback(() => {
-    setCount(count + 1)
-  }, [count])
-
   return (
-    <div onClick={handleClick} className={styles.page}>
+    <div className={styles.page}>
       <main className={styles.main}>
         <Image
           className={styles.logo}
@@ -161,9 +90,6 @@ export default function Home() {
           Go to nextjs.org →
         </a>
       </footer>
-      <FetchProvider value={fetchConfig}>
-        <App />
-      </FetchProvider>
     </div>
-  )
+  );
 }

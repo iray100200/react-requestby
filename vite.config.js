@@ -18,7 +18,7 @@ export default defineConfig({
         }
       }
     },
-    sourcemap: false,
+    sourcemap: true,
     emptyOutDir: true
   },
   plugins: [react(), dts({ rollupTypes: true })]

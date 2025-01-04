@@ -1,34 +1,34 @@
 'use client';
-import type { ReactElement, MemoExoticComponent, ComponentType, ReactNode, JSX } from 'react';
-import { memo, useState, useEffect as effect, Children, useMemo, useContext, useCallback } from 'react';
+import type { ReactElement, MemoExoticComponent, ComponentType, JSX } from 'react';
+import { memo, useState, useEffect as effect, Children, useMemo, useContext, createContext } from 'react';
 import { ThenComponent, Then, ThenProps } from '../then';
 import { CatchComponent, Catch, CatchProps } from '../catch';
 import { FetchContext } from '../provider';
-import { Scheduler, SchedulerContext } from '../scheduler';
+import { SchedulerContext } from '../scheduler';
 import { Pending } from '../pending';
 
-declare type ResultCallback = { children: ReactNode | ((value: unknown) => ReactNode) }
-declare type Child = ReactElement<ResultCallback, MemoExoticComponent<ComponentType<ThenProps<unknown> | CatchProps>>>
+declare type Child = ReactElement<ThenProps, MemoExoticComponent<ComponentType<ThenProps | CatchProps>>>
 
 declare interface FetchProps extends RequestInit {
   target: string;
   children: Child | Child[];
-  scheduler?: Scheduler;
   searchParams?: {
     [key: string]: string
   }
 }
 
-declare interface Data<T = unknown> {
-  value: T | null;
-  error: Error | null;
+declare interface FetchResult<T = any> {
+  value?: T;
+  error?: Error;
 }
 
-export const Fetch = memo(function Fetch(props: FetchProps) {
-  const { target, scheduler, children, searchParams, ...requestInit } = props
+export const FetchResultContext = createContext<FetchResult>({})
+
+export const Fetch = memo(function Fetch<T = any>(props: FetchProps) {
+  const { target, children, searchParams, ...requestInit } = props
 
   //#regions states
-  const [data, setData] = useState<Data>({ value: null, error: null })
+  const [data, setData] = useState<FetchResult<T>>({})
   const [pending, setPending] = useState(false)
   const [request, setRequest] = useState<(() => Promise<Response>)[]>([])
   //#endregion
@@ -41,12 +41,6 @@ export const Fetch = memo(function Fetch(props: FetchProps) {
   //#region memos
   const fetchOption = useMemo(() => fetchContext.find(item => item.id === target), [])
   const pendingNodes = useMemo(() => Children.toArray(children).filter((child) => (child as JSX.Element).type === Pending), [children])
-  //#endregion
-
-  //#region callbacks
-  const renderContent = useCallback((children: unknown, data: unknown) => {
-    return typeof children === 'function' ? children(data) : children
-  }, [])
   //#endregion
 
   effect(() => {
@@ -73,6 +67,7 @@ export const Fetch = memo(function Fetch(props: FetchProps) {
   effect(() => {
     if (request.length === 0 || !fetchOption) return
     setPending(true)
+    setData({})
     request[0]().then((res) => {
       if (fetchOption.responseType === 'json') {
         return res.json()
@@ -82,13 +77,13 @@ export const Fetch = memo(function Fetch(props: FetchProps) {
       }
     }).then((value) => {
       setData({
-        value,
-        error: null
+        value: value || null,
+        error: void 0
       })
     }).catch((error) => {
       setData({
-        error,
-        value: null
+        error: error || new Error(),
+        value: void 0
       })
     }).finally(() => {
       setPending(false)
@@ -98,20 +93,28 @@ export const Fetch = memo(function Fetch(props: FetchProps) {
   if (pendingNodes.length > 0 && pending) {
     return pendingNodes
   }
-  return Children.map(children, (child) => {
-    if (data.value && child.type === Then) {
-      return <ThenComponent key="then" value={data.value}>
-        {renderContent(child.props.children, data.value)}
-      </ThenComponent>
+  return <FetchResultContext.Provider value={data}>
+    {
+      Children.map(children, (child, index) => {
+        if (child.type === Then) {
+          return <ThenComponent key={`then${index}`} value={data.value} transform={child.props.transform} render={child.props.onReturn}>
+            {child.props.children}
+          </ThenComponent>
+        }
+        if (child.type === Catch) {
+          return <CatchComponent key={`catch${index}`} error={data.error} render={child.props.onReturn}>
+            {child.props.children}
+          </CatchComponent>
+        }
+        if (child.type === Pending) {
+          return null
+        }
+        return child
+      })
     }
-    if (data.error && child.type === Catch && typeof child.props.children === 'function') {
-      return <CatchComponent key="catch" error={data.error}>
-        {renderContent(child.props.children, data.error)}
-      </CatchComponent>
-    }
-    if (child.type === Pending) {
-      return null
-    }
-    return child
-  })
+  </FetchResultContext.Provider>
 })
+
+export function useFetchResult<T>() {
+  return useContext<FetchResult<T>>(FetchResultContext)
+}
