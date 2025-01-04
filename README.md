@@ -7,14 +7,19 @@ npm i react-requestby
 ```
 # Fetch example
 ```tsx
-import { FetchProvider, FetchOptions, Fetch, Then, Catch, Pending, useSchedule } from 'react-requestby';
+import { FetchProvider, FetchOptions, Fetch, Then, Catch, Pending, useSchedule, useFetchResult } from 'react-requestby';
 import { memo, useCallback, useState } from "react";
 
 declare interface HelloResponse {
   message: string
 }
 
-const fetchConfig: FetchOptions = [
+const FetchResult = () => {
+  const { value } = useFetchResult<HelloResponse>()
+  return value.message
+}
+
+const fetchConfig = [
   {
     id: 'hello',
     url: '/api/hello',
@@ -30,10 +35,13 @@ const fetchConfig: FetchOptions = [
     url: '/api/hello',
     responseType: 'json'
   }
-]
+] as const satisfies FetchOptions
 
 function App() {
   const [SchedulerProvider, scheduler] = useSchedule(false)
+
+  const renderThen = useCallback((value: HelloResponse) => value.message, [])
+  const renderError = useCallback((error: Error) => <Next>{error.message}</Next>, [])
 
   const handleClick = useCallback(() => {
     scheduler.next('hello', { name: Math.random().toString() })
@@ -43,32 +51,20 @@ function App() {
     <div>The requests:</div>
     <SchedulerProvider>
       <Fetch target="error">
-        <Catch>
-          {
-            (error) => {
-              return error.message
-            }
-          }
-        </Catch>
+        <Catch onReturn={renderError} />
       </Fetch>
       <Fetch target="hello" searchParams={{
         name: Math.random().toString()
       }}>
-        <Then<HelloResponse>>
-          {
-            (value) => value.message
-          }
+        <Then>
+          <FetchResult />
         </Then>
         <Pending>Loading...</Pending>
       </Fetch>
     </SchedulerProvider>
     <div>
       <Fetch target="hello2">
-        <Then<HelloResponse>>
-          {
-            (value) => value.message
-          }
-        </Then>
+        <Then onReturn={renderThen} />
       </Fetch>
     </div>
   </div>
