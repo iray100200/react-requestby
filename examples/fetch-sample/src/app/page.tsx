@@ -17,7 +17,11 @@ const fetchConfig = [
   {
     id: 'hello',
     url: '/api/hello',
-    responseType: 'json'
+    responseType: 'json',
+    requestInit: {
+      method: 'get',
+      credentials: 'same-origin'
+    }
   },
   {
     id: 'error',
