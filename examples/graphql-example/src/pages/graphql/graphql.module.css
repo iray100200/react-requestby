@@ -1,0 +1,10 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+.sandbox {
+  height: 100vh;
+  width: 100%;
+  border: none;
+}

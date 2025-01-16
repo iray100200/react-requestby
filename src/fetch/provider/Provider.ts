@@ -8,10 +8,5 @@ export declare type FetchOptions = {
   responseType?: 'text' | 'json' | 'blob';
 }[]
 
-const FetchContext = createContext<FetchOptions>([])
-const FetchProvider = FetchContext.Provider
-
-export {
-  FetchContext,
-  FetchProvider
-}
+export const FetchContext = createContext<FetchOptions>([])
+export const FetchProvider = FetchContext.Provider

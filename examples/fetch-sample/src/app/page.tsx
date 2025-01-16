@@ -3,11 +3,24 @@
 import Image from "next/image";
 import styles from "./page.module.css";
 import { FetchProvider, FetchOptions, Fetch, Then, Catch, Pending, useSchedule, useFetchResult } from 'react-requestby';
-import { memo, useCallback, useState } from "react";
+import { Component, memo, ReactNode, useCallback, useEffect, useState } from "react";
 
 const Next = memo(function Next(props: { children: string }) {
+  useEffect(() => {
+    console.log('next ...')
+  })
   return <div>Next div! {props.children}</div>
 })
+
+class Previous extends Component<unknown, unknown> {
+  componentDidMount(): void {
+    console.log('previous did mount')
+  }
+
+  render(): ReactNode {
+    return 'Previous'
+  }
+}
 
 declare interface HelloResponse {
   message: string
@@ -48,7 +61,10 @@ function App() {
   }, [scheduler])
 
   const renderThen = useCallback((value: HelloResponse) => value.message, [])
-  const renderError = useCallback((error: Error) => <Next>{error.message}</Next>, [])
+  const renderError = useCallback((error: Error) => (<>
+    <Next>{error.message}</Next>
+    <Previous></Previous>
+  </>), [])
 
   return <div onClick={handleClick}>
     <div>The requests:</div>
